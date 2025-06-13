@@ -1,9 +1,9 @@
 import random
 from .models import Card
-from .game_manager import GameManager, PlayResult
+
 
 class SimpleBot:
-    def __init__(self, game_manager: GameManager):
+    def __init__(self, game_manager: "GameManager"):
         self.game_manager = game_manager
 
     def is_bot(self, player) -> bool:

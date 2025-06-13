@@ -203,7 +203,7 @@ class GameManager:
             bot = SimpleBot(self)
             bot.take_turn(room_id, current_player.id)
 
-    def get_player_info(self,room_id: str, player_id: str) -> dict:
+    def get_player_view(self,room_id: str, player_id: str) -> dict:
         game_state = self.get_game_state(room_id)
         state = game_state.to_dict()
         for player in state['players']:
