@@ -9,7 +9,7 @@ import diceware
 import argparse
 from urllib.parse import urljoin
 
-from database import get_db, create_room, get_room, list_rooms, join_room, start_game, get_game_state, update_game_state
+from database.database import get_db, create_room, get_room, list_rooms, join_room, start_game, get_game_state, update_game_state
 from game.models import GameState, Player, Card
 
 app = FastAPI()
@@ -182,6 +182,12 @@ def start_game_room(room_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Could not start game")
     return {"status": "success"}
 
+@app.get("/player_id")
+def get_or_create_player_id():
+    """Generate and return a new player ID."""
+    player_id = str(uuid.uuid4())
+    return {"player_id": player_id}
+
 # WebSocket endpoint
 @app.websocket("/ws/game/{room_id}/{player_id}")
 async def websocket_endpoint(
@@ -255,4 +261,4 @@ async def websocket_endpoint(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=8000)
