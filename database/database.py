@@ -18,6 +18,7 @@ class Room(Base):
     players = Column(JSON, nullable=False)  # List of player IDs
     status = Column(String, nullable=False)  # waiting, playing, ended
     max_players = Column(Integer, nullable=False)
+    bot_count = Column(Integer, default=0)  # Number of bots in the room
     created_at = Column(DateTime, default=func.now())
     last_activity = Column(DateTime, default=func.now())
     expires_at = Column(DateTime, nullable=False)
@@ -44,7 +45,7 @@ def get_db():
     finally:
         db.close()
 
-def create_room(db, room_id: str, name: str, host_id: str, max_players: int) -> Room:
+def create_room(db, room_id: str, name: str, host_id: str, max_players: int, bot_count:int = 0) -> Room:
     """Create a new room with expiration time."""
     try:
         # Set room to expire in 24 hours
@@ -57,6 +58,7 @@ def create_room(db, room_id: str, name: str, host_id: str, max_players: int) -> 
             players=json.dumps([host_id]),
             status="waiting",
             max_players=max_players,
+            bot_count=bot_count,  # Default to 0 bots
             expires_at=expires_at
         )
         db.add(room)

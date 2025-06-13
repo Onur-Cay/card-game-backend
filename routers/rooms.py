@@ -63,7 +63,8 @@ def generate_room_id() -> str:
 class CreateRoomRequest(BaseModel):
     name: str
     host_id: str
-    max_players: int = 4
+    max_players: int = 5
+    bot_count: int = 0  # Optional, default to 0 if not specified
 
 class RoomResponse(BaseModel):
     id: str
@@ -73,6 +74,7 @@ class RoomResponse(BaseModel):
     status: str
     max_players: int
     shareable_link: str
+    bot_count: int = 0  # Optional, default to 0 if not specified
 
 # REST API endpoints
 @router.post("/rooms", response_model=RoomResponse)
@@ -81,7 +83,7 @@ def create_new_room(request: CreateRoomRequest, db: Session = Depends(get_db)):
     room_id = generate_room_id()
     
     # Create the room
-    room = create_room(db, room_id, request.name, request.host_id, request.max_players)
+    room = create_room(db, room_id, request.name, request.host_id, request.max_players, request.bot_count)
     
     # Generate shareable link
     shareable_link = urljoin(BASE_URL, f"/join/{room_id}")
@@ -93,7 +95,8 @@ def create_new_room(request: CreateRoomRequest, db: Session = Depends(get_db)):
         players=json.loads(room.players),
         status=room.status,
         max_players=room.max_players,
-        shareable_link=shareable_link
+        shareable_link=shareable_link,
+        bot_count=room.bot_count
     )
 
 @router.get("/rooms", response_model=List[RoomResponse])
