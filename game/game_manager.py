@@ -1,6 +1,8 @@
 from typing import Dict, Optional, List
-from .models import GameState,Card, Player, GameStatus, CardRank
+from .models import GameState,Card, Player, GameStatus, CardRank, CardSuit
 from enum import Enum
+from random import shuffle
+from .bot import SimpleBot
 
 class PlayResult(Enum):
     SUCCESS = "success"
@@ -17,7 +19,7 @@ class GameManager:
         game_state = GameState(
             players=players,
             current_player_index=0,
-            deck=[],
+            deck=self._init_deck(len(players)),
             discard_pile=[],
             game_status=GameStatus.WAITING,
             room_id=room_id
@@ -72,18 +74,14 @@ class GameManager:
                 return PlayResult.ILLEGAL_CARD
             else:
                 self._pickup_discard_pile(room_id, player_id)
+                self._advance_turn(room_id)
                 return PlayResult.MUST_PICKUP
 
         # Card is legal, play it
         pile.remove(card)
         game_state.discard_pile.append(card)
         self._update_game_state(room_id, game_state)
-
-        # Check for game over
-        winner = self._check_game_over(room_id)
-        if winner:
-            return PlayResult.GAME_OVER
-
+        self._advance_turn(room_id)
         return PlayResult.SUCCESS
 
     def play_face_down_card(self, room_id: str, player_id: str, card_index: int) -> PlayResult:
@@ -107,17 +105,19 @@ class GameManager:
             player.hand.append(card)
             self._pickup_discard_pile(room_id, player_id)
             self._update_game_state(room_id, game_state)
+            self._advance_turn(room_id)
             return PlayResult.MUST_PICKUP
 
         # Card is legal, play it
         game_state.discard_pile.append(card)
         self._update_game_state(room_id, game_state)
 
-        # Check for game over
+        # Check for game over (only here)
         winner = self._check_game_over(room_id)
         if winner:
             return PlayResult.GAME_OVER
 
+        self._advance_turn(room_id)
         return PlayResult.SUCCESS
 
     def _check_legal_play(self,card: Card,discard_pile:List) -> bool:
@@ -197,3 +197,32 @@ class GameManager:
         # Move to the next player (wrap around if at the end)
         game_state.current_player_index = (game_state.current_player_index + 1) % len(game_state.players)
         self._update_game_state(room_id, game_state)
+
+        current_player = game_state.players[game_state.current_player_index]
+        if getattr(current_player, "is_bot", False):
+            bot = SimpleBot(self)
+            bot.take_turn(room_id, current_player.id)
+
+    def get_player_info(self,room_id: str, player_id: str) -> dict:
+        game_state = self.get_game_state(room_id)
+        state = game_state.to_dict()
+        for player in state['players']:
+            if player['id'] != player_id:
+                player['hand'] = []
+        return state
+    
+    def _init_deck(self, player_count: int) -> List[Card]:
+        """
+        Initializes a standard deck of cards for the game.
+        """
+        single_deck = [
+            Card(rank=rank, suit=suit)
+            for rank in CardRank
+            for suit in CardSuit
+        ]
+        deck = single_deck.copy()
+        if player_count >= 4:
+            # Add additional decks for more players
+            deck += single_deck
+        shuffle(deck)
+        return deck
