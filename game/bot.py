@@ -1,5 +1,6 @@
 import random
 from .models import Card
+from constants import GameStatus
 
 
 class SimpleBot:
@@ -15,6 +16,14 @@ class SimpleBot:
         player = next((p for p in game_state.players if p.id == player_id), None)
         if not player:
             return
+        
+        if game_state.game_status == GameStatus.SWAPPING:
+            self.game_manager.swap_and_ready(
+                room_id, 
+                player_id, 
+                new_hand=player.hand,  # Bot does not change hand
+                new_face_up=player.face_up  # Bot does not change face_up
+                )
 
         # 1. Try to play a random legal card from hand
         legal_hand = [card for card in player.hand if self.game_manager._check_legal_play(card, game_state.discard_pile)]
@@ -38,5 +47,5 @@ class SimpleBot:
 
         # If no moves possible, do nothing (should not happen in a well-designed game)
 
-
+    #TODO need to handle bot swapping logic. Ideally it doesnt do anything but sets the state ready.
 

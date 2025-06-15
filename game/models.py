@@ -45,6 +45,7 @@ class Player(BaseModel):
     face_up: List[Card] = [] 
     face_down: List[Card] = []
     is_bot: bool = False
+    is_ready: bool = False
 
 
     def to_dict(self) -> Dict:
@@ -55,6 +56,7 @@ class Player(BaseModel):
             "face_up": [card.to_dict() for card in self.face_up],
             "face_down": [None]*len(self.face_down),  # Players cannot see face-down cards,
             "is_bot": self.is_bot,
+            "is_ready": self.is_ready
         }
 
     @classmethod
@@ -64,6 +66,7 @@ class Player(BaseModel):
             name=data["name"],
             hand=[Card.from_dict(card) for card in data.get("hand", [])],
             is_bot=data.get("is_bot", False),
+            is_ready=data.get("is_ready", False),
         )
 
 class GameStatus(str, Enum):

@@ -226,3 +226,33 @@ class GameManager:
             deck += single_deck
         shuffle(deck)
         return deck
+
+    def swap_and_ready(self, room_id: str, player_id: str, new_hand:List[Card], new_face_up:List[Card]) -> bool:
+        """
+        Handle card swapping logic and set player as ready.
+        """
+        game_state = self.get_game_state(room_id)
+        if not game_state or game_state.game_status != GameStatus.SWAPPING:
+            return False
+
+        player = next((p for p in game_state.players if p.id == player_id), None)
+        if not player:
+            return False
+
+        # Validate: new_hand + new_face_up must be a permutation of original hand + face_up
+        original_cards = player.hand + player.face_up
+        original_set = sorted(original_cards, key=lambda c: (c.rank, c.suit))
+        new_set = sorted(new_hand + new_face_up, key=lambda c: (c.rank, c.suit))
+        if [(c.rank, c.suit)for c in original_set] != [(c.rank, c.suit) for c in new_set]:
+            return False  # Invalid swap attempt
+
+        # Update player's cards
+        player.hand = new_hand
+        player.face_up = new_face_up
+        player.is_ready = True
+        self._update_game_state(room_id, game_state)
+        return True
+    
+    def all_players_ready(self, room_id: str) -> bool:
+        game_state = self.get_game_state(room_id)
+        return all(getattr(p, "is_ready", False) for p in game_state.players)

@@ -84,6 +84,7 @@ async def websocket_endpoint(
                     })
             if "action" in data:
                 action = data["action"]
+                result = None
                 if action == "play_card":
                     card_data = data.get("card")
                     source = data.get("source", "hand")
@@ -91,9 +92,11 @@ async def websocket_endpoint(
                 elif action == "play_face_down_card":
                     card_index = data.get("card_index")
                     result = gameManager.play_face_down_card(room_id, player_id, card_index)
-                elif action == "swap_cards":
-                    result = None
-                    pass # Handle swap cards logic here
+                elif action == "player_ready":
+                    new_hand = [Card.from_dict(card) for card in data.get("hand", [])]
+                    new_face_up = [Card.from_dict(card) for card in data.get("face_up", [])]
+                    all_ready = gameManager.all_players_ready(room_id)
+                    result = "all_ready" if all_ready else "waiting"
                 game_state = gameManager.get_game_state(room_id)
                 if not game_state:
                     await websocket.send_json({
