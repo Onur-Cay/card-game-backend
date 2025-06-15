@@ -95,6 +95,15 @@ async def websocket_endpoint(
                 elif action == "player_ready":
                     new_hand = [Card.from_dict(card) for card in data.get("hand", [])]
                     new_face_up = [Card.from_dict(card) for card in data.get("face_up", [])]
+                    validation = gameManager.swap_and_ready(
+                        room_id, 
+                        player_id, 
+                        new_hand=new_hand, 
+                        new_face_up=new_face_up
+                    )
+                    if not validation:
+                        await websocket.send_json({"error": "Cards are not valid for swapping."})
+                        continue
                     all_ready = gameManager.all_players_ready(room_id)
                     result = "all_ready" if all_ready else "waiting"
                 game_state = gameManager.get_game_state(room_id)
