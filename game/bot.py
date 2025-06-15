@@ -1,6 +1,6 @@
 import random
-from .models import Card
-from constants import GameStatus
+from .models import GameStatus
+
 
 
 class SimpleBot:
