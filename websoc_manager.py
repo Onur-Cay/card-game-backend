@@ -60,16 +60,16 @@ async def websocket_endpoint(
         
         while True:
             data = await websocket.receive_json()
-            if "screen" in data:
-                manager.player_screens[player_id] = data["screen"]
-                if data["screen"] == "game":
+            if data.get("screen"):
+                manager.player_screens[player_id] = data.get("screen")
+                if data.get("screen") == "game":
                     game_state = get_game_state(db, room_id)
                     await websocket.send_json({
                         "type": "game_state",
                         "screen": "game",
                         "data": game_state.to_dict()
                     })
-                elif data["screen"] == "lobby":
+                elif data.get("screen") == "lobby":
                     room = get_room(db, room_id)
                     await websocket.send_json({
                         "type": "room_info",
@@ -82,8 +82,8 @@ async def websocket_endpoint(
                             "shareable_link": urljoin(BASE_URL, f"/join/{room_id}")
                         }
                     })
-            if "action" in data:
-                action = data["action"]
+            if data.get("action"):
+                action = data.get("action")
                 result = None
                 if action == "play_card":
                     card_data = data.get("card")
@@ -111,18 +111,17 @@ async def websocket_endpoint(
                     await websocket.send_json({
                         "error": "Game not found or ended."})
                     continue
-                game_state = gameManager.get_game_state(room_id)
                 for player in game_state.players:
                     player_view = gameManager.get_player_view(room_id, player.id)
                     await manager.send_to_player({
                         "type": "game_state",
                         "screen": "game",
                         "data": player_view,
-                        "result": result.value
-                    }, player.id)
+                        "result": getattr(result, "value", result)
+                    }, player.id, room_id)
             continue
     except WebSocketDisconnect:
-        manager.disconnect(websocket, room_id, player_id)
+        manager.disconnect(room_id, player_id)
         await manager.broadcast_to_room({
             "type": "player_disconnected",
             "screen": "game",
