@@ -116,7 +116,7 @@ def start_game(db, room_id: str, game_state: GameState) -> bool:
         # Create game instance
         game_instance = GameInstance(
             id=room_id,
-            game_state=game_state.to_dict()
+            game_state=game_state.to_dict(for_db=True),
         )
         db.add(game_instance)
         
@@ -149,7 +149,7 @@ def update_game_state(db, room_id: str, game_state: GameState) -> bool:
         if not game_instance:
             return False
         
-        game_instance.game_state = game_state.to_dict()
+        game_instance.game_state = game_state.to_dict(for_db=True)
         game_instance.last_activity = datetime.now()
         db.commit()
         return True

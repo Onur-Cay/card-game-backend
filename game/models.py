@@ -83,11 +83,11 @@ class GameState(BaseModel):
     game_status: GameStatus
     room_id: str
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, for_db=False) -> Dict:
         return {
             "players": [player.to_dict() for player in self.players],
             "current_player_index": self.current_player_index,
-            "deck": len(self.deck),
+            "deck": [card.to_dict() for card in self.deck] if for_db else len(self.deck),
             "discard_pile": [card.to_dict() for card in self.discard_pile],
             "game_status": self.game_status.value,
             "room_id": self.room_id

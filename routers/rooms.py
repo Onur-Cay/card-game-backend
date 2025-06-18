@@ -18,7 +18,7 @@ get_db, create_room, get_room, list_rooms, join_room, start_game, get_game_state
 )
 
 # Game Imports
-from game.models import Player, GameState
+from game.models import Player, GameState, GameStatus  # Add GameStatus to the import
 from game.game_manager import GameManager
 
 # Configuration
@@ -144,8 +144,8 @@ def start_game_room(room_id: str, db: Session = Depends(get_db)):
     gameManager.deal_cards(room_id) 
 
     # Set game status to SWAPPING or PLAYING as needed
-    game_state.game_status = "swapping"  # or "playing"
-    
+    game_state.game_status = GameStatus.SWAPPING  # <-- FIXED
+
     if not start_game(db, room_id, game_state):
         raise HTTPException(status_code=400, detail="Could not start game")
     return {"status": "success"}
