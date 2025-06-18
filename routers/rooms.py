@@ -1,4 +1,3 @@
-
 #General Imports
 import argparse
 import uuid
@@ -20,11 +19,14 @@ get_db, create_room, get_room, list_rooms, join_room, start_game, get_game_state
 
 # Game Imports
 from game.models import Player, GameState
+from game.game_manager import GameManager
 
 # Configuration
 from constants import BASE_URL, ROOM_ID_WORDS
 
 router = APIRouter()
+
+gameManager = GameManager()
 
 def generate_room_id() -> str:
     """Generate a memorable room ID using diceware words.
@@ -134,16 +136,15 @@ def start_game_room(room_id: str, db: Session = Depends(get_db)):
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     
-    # Create initial game state
+    # Create Player objects
     players = [Player(id=pid, name=f"Player {i+1}") for i, pid in enumerate(json.loads(room.players))]
-    game_state = GameState(
-        players=players,
-        current_player_index=0,
-        deck=[],  # TODO: Initialize with shuffled deck
-        discard_pile=[],
-        game_status="playing",
-        room_id=room_id
-    )
+    
+    # Use GameManager to create and deal the game state
+    game_state = gameManager.create_game_state(room_id, players)
+    gameManager.deal_cards(room_id) 
+
+    # Set game status to SWAPPING or PLAYING as needed
+    game_state.game_status = "swapping"  # or "playing"
     
     if not start_game(db, room_id, game_state):
         raise HTTPException(status_code=400, detail="Could not start game")

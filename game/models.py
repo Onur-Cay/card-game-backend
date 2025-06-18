@@ -87,7 +87,7 @@ class GameState(BaseModel):
         return {
             "players": [player.to_dict() for player in self.players],
             "current_player_index": self.current_player_index,
-            "deck": [card.to_dict() for card in self.deck],
+            "deck": len(self.deck),
             "discard_pile": [card.to_dict() for card in self.discard_pile],
             "game_status": self.game_status.value,
             "room_id": self.room_id

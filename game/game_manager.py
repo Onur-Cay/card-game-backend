@@ -256,3 +256,12 @@ class GameManager:
     def all_players_ready(self, room_id: str) -> bool:
         game_state = self.get_game_state(room_id)
         return all(getattr(p, "is_ready", False) for p in game_state.players)
+    
+    def deal_cards(self, room_id: str, hand_count=4, face_up_count=4, face_down_count=4):
+        game_state = self.get_game_state(room_id)
+        deck = game_state.deck
+        for player in game_state.players:
+            player.hand = [deck.pop() for _ in range(hand_count)]
+            player.face_up = [deck.pop() for _ in range(face_up_count)]
+            player.face_down = [deck.pop() for _ in range(face_down_count)]
+        self._update_game_state(room_id, game_state)
